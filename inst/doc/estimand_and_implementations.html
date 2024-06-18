@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+
+
+<title>Introduction to estimating a marginal estimand with beeca</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+
+<style type="text/css">
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
+
+
+
+<style type="text/css">
+code {
+white-space: pre;
+}
+.sourceCode {
+overflow: visible;
+}
+</style>
+<style type="text/css" data-origin="pandoc">
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #aaaaaa;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa; padding-left: 4px; }
+div.sourceCode
+{ }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } 
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.at { color: #7d9029; } 
+code span.bn { color: #40a070; } 
+code span.bu { color: #008000; } 
+code span.cf { color: #007020; font-weight: bold; } 
+code span.ch { color: #4070a0; } 
+code span.cn { color: #880000; } 
+code span.co { color: #60a0b0; font-style: italic; } 
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.do { color: #ba2121; font-style: italic; } 
+code span.dt { color: #902000; } 
+code span.dv { color: #40a070; } 
+code span.er { color: #ff0000; font-weight: bold; } 
+code span.ex { } 
+code span.fl { color: #40a070; } 
+code span.fu { color: #06287e; } 
+code span.im { color: #008000; font-weight: bold; } 
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.kw { color: #007020; font-weight: bold; } 
+code span.op { color: #666666; } 
+code span.ot { color: #007020; } 
+code span.pp { color: #bc7a00; } 
+code span.sc { color: #4070a0; } 
+code span.ss { color: #bb6688; } 
+code span.st { color: #4070a0; } 
+code span.va { color: #19177c; } 
+code span.vs { color: #4070a0; } 
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } 
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    var j = 0;
+    while (j < rules.length) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") {
+        j++;
+        continue;
+      }
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') {
+        j++;
+        continue;
+      }
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">Introduction to estimating a marginal
+estimand with beeca</h1>
+
+
+
+<div id="introduction" class="section level2">
+<h2>Introduction</h2>
+<p>The <a href="https://www.ema.europa.eu/en/documents/scientific-guideline/ich-e9-r1-addendum-estimands-and-sensitivity-analysis-clinical-trials-guideline-statistical-principles-clinical-trials-step-5_en.pdf">ICH
+E9(R1) addendum</a> proposed a framework for the formulation of
+scientific questions and treatment effects in clinical trials. The
+framework emphasized the importance of formulating precisely the
+scientific questions of interest in clinical trials in the form of an
+estimand. An estimand describes the treatment effect of interest via
+five attributes, which include treatment, population, variable
+(endpoint), intercurrent event and population-level summary.</p>
+<p>Recent <a href="https://www.fda.gov/regulatory-information/search-fda-guidance-documents/adjusting-covariates-randomized-clinical-trials-drugs-and-biological-products">FDA
+guidance (2023)</a> on <em>Adjusting for Covariates in Randomized
+Clinical Trials for Drugs and Biological Products for Industry</em>
+discussed various considerations when prospectively specifying
+covariate-adjusted analysis, including the distinction between
+<em>unconditional</em> vs. <em>conditional</em> average treatment
+effects.</p>
+<p>This vignette provides</p>
+<ol style="list-style-type: decimal">
+<li>A brief explanation of the different concepts on average treatment
+effect covered in the package.</li>
+<li>An analysis example using the package to estimate an average
+treatment effect in a clinical trial with covariate adjustment.</li>
+<li>A comparison with other implementations of the methods.</li>
+</ol>
+</div>
+<div id="general-concepts" class="section level2">
+<h2>General concepts</h2>
+<div id="what-is-an-average-treatment-effect" class="section level3">
+<h3>What is an average treatment effect?</h3>
+<p>In general, an average treatment effect is the effect of moving
+<strong>a</strong> population from untreated (control treatment) to
+treated (experimental treatment). An average treatment effect can be
+estimated either with or without covariate adjustment.</p>
+<p>Different flavours of average treatment effect exist, depending on
+the specific population that is moved from untreated to treated. For an
+overall superpopulation (denoted <span class="math inline">\(S\)</span>), and for a given sample of patients in
+the trial (who are assumed to be randomly sampled from the
+superpopulation), we define the following potential estimands.</p>
+<ol style="list-style-type: decimal">
+<li>Population Average Treatment Effect <span class="math inline">\(\mathrm{PATE}^S\)</span>. The average outcome of
+everyone in the superpopulation if they were treated with the
+experimental treatment vs. the average outcome if they were treated with
+the control treatment.</li>
+<li>Conditional Average Treatment Effect, <span class="math inline">\(\mathrm{CATE}^S(x)\)</span>. The average outcome
+of everyone in the superpopulation with covariate value <span class="math inline">\(x\)</span> if they were treated with the
+experimental treatment vs. the average outcome if they were treated with
+the control treatment.</li>
+<li>Conditional Population Average Treatment Effect <span class="math inline">\(\mathrm{CPATE}^S\)</span>. The average of <span class="math inline">\(\mathrm{CATE}^S(x_i)\)</span> for the patients
+<span class="math inline">\(i=1,\ldots,N\)</span> in the trial sample.
+Can also be thought of as the expected difference in outcome means
+(experimental vs. control), conditional on the baseline covariates <span class="math inline">\(x_1,\ldots,x_N\)</span>.</li>
+<li>Sample Average Treatment Effect <span class="math inline">\(\mathrm{SATE}\)</span>. The average outcome of
+everyone in the trial if they were treated with the experimental
+treatment vs. the average outcome if they were treated with the control
+treatment.</li>
+</ol>
+<p>In the FDA guidance, and in other recent discussions on covariate
+adjustment, average treatment effects are often classified as either
+<em>unconditional</em> or <em>conditional</em>. (Sometimes
+<em>marginal</em> is used interchangeably with <em>unconditional</em>).
+In this context, what is usually meant by “conditional” is <span class="math inline">\(\mathrm{CATE}^S(x)\)</span>. That is, a subgroup
+specific average treatment effect. Often, an assumption is made that
+subgroup specific average treatment effects are identical across
+subgroups. If this assumption is wrong, then interpretation can be
+challenging. What is usually meant by “unconditional” (or “marginal”) is
+an average of subgroup-specific average treatment effects. This second
+averaging step gives corresponding estimation procedures a level of
+robustness to model misspecification. Hence the following distinction in
+the FDA guidance:</p>
+<ol style="list-style-type: decimal">
+<li>Sponsors can perform covariate-adjusted estimation and inference for
+an unconditional treatment effect in the primary analysis of data from a
+randomized trial.</li>
+<li>Sponsors should discuss with the relevant review divisions specific
+proposals in a protocol or statistical analysis plan containing
+nonlinear regression to estimate conditional treatment effects for the
+primary analysis.</li>
+</ol>
+<p>Under the coarse classification of average treatment effects as
+either “unconditional / marginal” or “conditional”, the <span class="math inline">\(\mathrm{PATE}^S\)</span>, <span class="math inline">\(\mathrm{CPATE}^S\)</span> and <span class="math inline">\(\mathrm{SATE}\)</span> can be viewed as
+“unconditional / marginal”, while the <span class="math inline">\(\mathrm{CATE}^S(x)\)</span> can be viewed as
+“conditional”.</p>
+</div>
+<div id="how-to-estimate-unconditional-marginal-average-treatment-effect" class="section level3">
+<h3>How to estimate “unconditional / marginal” average treatment
+effect?</h3>
+<p>For a binary endpoint, an average treatment effect, whether it be a
+<span class="math inline">\(\mathrm{PATE}^S\)</span>, <span class="math inline">\(\mathrm{CPATE}^S\)</span> or <span class="math inline">\(\mathrm{SATE}\)</span>, can be estimated from an
+adjusted logistic regression using the g-computation method. That is, by
+estimating the average counterfactual outcomes on each arm based on
+predictions from the working model. Based on these average
+counterfactual outcomes, different summary measure such as risk
+difference, relative risk or odds ratio can be evaluated.</p>
+<p>Regardless of whether the estimand is <span class="math inline">\(\mathrm{PATE}^S\)</span>, <span class="math inline">\(\mathrm{CPATE}^S\)</span> or <span class="math inline">\(\mathrm{SATE}\)</span>, the same point estimator
+can be used.</p>
+</div>
+<div id="how-to-estimate-the-variance-of-the-g-computation-estimator-of-average-treatment-effect" class="section level3">
+<h3>How to estimate the variance of the g-computation estimator of
+average treatment effect?</h3>
+<p>To avoid ambiguity regarding how the variance of the g-computation
+estimator should be calculated, it is necessary to be precise about
+whether one is estimating the <span class="math inline">\(\mathrm{PATE}^S\)</span>, <span class="math inline">\(\mathrm{CPATE}^S\)</span> or <span class="math inline">\(\mathrm{SATE}\)</span>.</p>
+<p>{beeca} implements variance estimation for <span class="math inline">\(\mathrm{PATE}^S\)</span> based on the methods of
+<a href="https://doi.org/10.1080/24754269.2023.2205802">Ye et
+al. (2023)</a>, and <span class="math inline">\(\mathrm{CPATE}^S\)</span> based on <a href="https://doi.org/10.1177/009286151104500409">Ge et
+al. (2011)</a>.</p>
+<p>See <a href="https://osf.io/9mp58/">Magirr et al. (2024)</a> for
+discussion of the estimands <span class="math inline">\(\mathrm{PATE}^S\)</span> and <span class="math inline">\(\mathrm{CPATE}^S\)</span>, and the corresponding
+methodology for variance estimation.</p>
+</div>
+</div>
+<div id="analysis-example" class="section level2">
+<h2>Analysis example</h2>
+<p>In the following example, we will use an example CDISC clinical trial
+dataset in ADaM format (<code>?trial02_cdisc</code>). We will only
+include the two treatment arms of interest for the analysis: “Xanomeline
+High Dose” and “Placebo”. Below we show how to describe and perform an
+adjusted analysis targeting marginal risk difference between the two
+arms.</p>
+<p>A logistic regression model will be used to estimate the average
+treatment effect between Xanomeline High Dose and Placebo. The model
+will adjust for baseline values of patient sex, race and age. Difference
+in marginal response proportions with p-value and corresponding 95%
+confidence interval will be estimated from the logistic regression model
+using the methodology described in Ge et al. 2011 with sandwich variance
+estimator (Liu et al. 2023). The sandwich estimator provides robustness
+to model-misspecification.</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="fu">library</span>(beeca)</span>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span></code></pre></div>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="do">## Prepare the dataset for input</span></span>
+<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a>dat <span class="ot">&lt;-</span> trial02_cdisc <span class="sc">%&gt;%</span></span>
+<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a>  <span class="do">## In this case we are only interested in comparing two arms: Placebo vs Xanomeline High Dose</span></span>
+<span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(TRTP <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">&quot;Placebo&quot;</span>, <span class="st">&quot;Xanomeline High Dose&quot;</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb2-5"><a href="#cb2-5" tabindex="-1"></a>  <span class="do">## Treatment variable must be coded as a factor</span></span>
+<span id="cb2-6"><a href="#cb2-6" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">mutate</span>(<span class="at">TRTP =</span> <span class="fu">factor</span>(TRTP))</span>
+<span id="cb2-7"><a href="#cb2-7" tabindex="-1"></a></span>
+<span id="cb2-8"><a href="#cb2-8" tabindex="-1"></a><span class="do">## Fit the logistic regression model adjusting for SEX, RACE and AGE</span></span>
+<span id="cb2-9"><a href="#cb2-9" tabindex="-1"></a>fit <span class="ot">&lt;-</span> <span class="fu">glm</span>(AVAL <span class="sc">~</span> TRTP <span class="sc">+</span> SEX <span class="sc">+</span> RACE <span class="sc">+</span> AGE, <span class="at">family =</span> <span class="st">&quot;binomial&quot;</span>, <span class="at">data =</span> dat)</span>
+<span id="cb2-10"><a href="#cb2-10" tabindex="-1"></a></span>
+<span id="cb2-11"><a href="#cb2-11" tabindex="-1"></a><span class="do">## Calculate the marginal treatment effect estimate and associated variance for a difference contrast</span></span>
+<span id="cb2-12"><a href="#cb2-12" tabindex="-1"></a><span class="do">## using the Ge et al. method with robust HC0 sandwich variance</span></span>
+<span id="cb2-13"><a href="#cb2-13" tabindex="-1"></a>marginal_fit <span class="ot">&lt;-</span> <span class="fu">get_marginal_effect</span>(fit,</span>
+<span id="cb2-14"><a href="#cb2-14" tabindex="-1"></a>  <span class="at">trt =</span> <span class="st">&quot;TRTP&quot;</span>,</span>
+<span id="cb2-15"><a href="#cb2-15" tabindex="-1"></a>  <span class="at">method =</span> <span class="st">&quot;Ge&quot;</span>,</span>
+<span id="cb2-16"><a href="#cb2-16" tabindex="-1"></a>  <span class="at">type =</span> <span class="st">&quot;HC0&quot;</span>,</span>
+<span id="cb2-17"><a href="#cb2-17" tabindex="-1"></a>  <span class="at">contrast =</span> <span class="st">&quot;diff&quot;</span>,</span>
+<span id="cb2-18"><a href="#cb2-18" tabindex="-1"></a>  <span class="at">reference =</span> <span class="st">&quot;Placebo&quot;</span></span>
+<span id="cb2-19"><a href="#cb2-19" tabindex="-1"></a>)</span></code></pre></div>
+<p>The results are summarised in ARD format (Analysis Results Dataset)
+for ease of subsequent reporting.</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a><span class="do">## View the ARD summary</span></span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a>marginal_fit<span class="sc">$</span>marginal_results</span></code></pre></div>
+<pre><code>## # A tibble: 12 × 8
+##    TRTVAR TRTVAL                  PARAM ANALTYP1 STAT  STATVAL ANALMETH ANALDESC
+##    &lt;chr&gt;  &lt;chr&gt;                   &lt;chr&gt; &lt;chr&gt;    &lt;chr&gt;   &lt;dbl&gt; &lt;chr&gt;    &lt;chr&gt;   
+##  1 TRTP   Xanomeline High Dose    AVAL  DESCRIP… N     84      count    Compute…
+##  2 TRTP   Xanomeline High Dose    AVAL  DESCRIP… n     61      count    Compute…
+##  3 TRTP   Xanomeline High Dose    AVAL  DESCRIP… %     72.6    percent… Compute…
+##  4 TRTP   Xanomeline High Dose    AVAL  INFEREN… risk   0.722  g-compu… Compute…
+##  5 TRTP   Xanomeline High Dose    AVAL  INFEREN… risk…  0.0493 Ge - HC0 Compute…
+##  6 TRTP   Placebo                 AVAL  DESCRIP… N     86      count    Compute…
+##  7 TRTP   Placebo                 AVAL  DESCRIP… n     29      count    Compute…
+##  8 TRTP   Placebo                 AVAL  DESCRIP… %     33.7    percent… Compute…
+##  9 TRTP   Placebo                 AVAL  INFEREN… risk   0.344  g-compu… Compute…
+## 10 TRTP   Placebo                 AVAL  INFEREN… risk…  0.0510 Ge - HC0 Compute…
+## 11 TRTP   diff: Xanomeline High … AVAL  INFEREN… diff   0.378  g-compu… Compute…
+## 12 TRTP   diff: Xanomeline High … AVAL  INFEREN… diff…  0.0714 Ge - HC0 Compute…</code></pre>
+<p>The results can then be passed on to the prespecified testing
+strategy as required. Below we provide a simple example where normal
+approximation is applied:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a><span class="do">## Extract results</span></span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a>marginal_results <span class="ot">&lt;-</span> marginal_fit<span class="sc">$</span>marginal_results</span>
+<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a>diff_est <span class="ot">&lt;-</span> marginal_results[marginal_results<span class="sc">$</span>STAT <span class="sc">==</span> <span class="st">&quot;diff&quot;</span>, <span class="st">&quot;STATVAL&quot;</span>][[<span class="dv">1</span>]]</span>
+<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a>diff_se <span class="ot">&lt;-</span> marginal_results[marginal_results<span class="sc">$</span>STAT <span class="sc">==</span> <span class="st">&quot;diff_se&quot;</span>, <span class="st">&quot;STATVAL&quot;</span>][[<span class="dv">1</span>]]</span>
+<span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a></span>
+<span id="cb5-6"><a href="#cb5-6" tabindex="-1"></a><span class="do">## 95% confidence interval</span></span>
+<span id="cb5-7"><a href="#cb5-7" tabindex="-1"></a>ci_l <span class="ot">&lt;-</span> diff_est <span class="sc">-</span> (<span class="fu">qnorm</span>(<span class="fl">0.975</span>) <span class="sc">*</span> diff_se)</span>
+<span id="cb5-8"><a href="#cb5-8" tabindex="-1"></a>ci_u <span class="ot">&lt;-</span> diff_est <span class="sc">+</span> (<span class="fu">qnorm</span>(<span class="fl">0.975</span>) <span class="sc">*</span> diff_se)</span>
+<span id="cb5-9"><a href="#cb5-9" tabindex="-1"></a></span>
+<span id="cb5-10"><a href="#cb5-10" tabindex="-1"></a><span class="do">## Two-sided p-value</span></span>
+<span id="cb5-11"><a href="#cb5-11" tabindex="-1"></a>z_score <span class="ot">&lt;-</span> diff_est <span class="sc">/</span> diff_se</span>
+<span id="cb5-12"><a href="#cb5-12" tabindex="-1"></a>p_value <span class="ot">&lt;-</span> <span class="dv">2</span> <span class="sc">*</span> (<span class="dv">1</span> <span class="sc">-</span> <span class="fu">pnorm</span>(<span class="fu">abs</span>(z_score)))</span>
+<span id="cb5-13"><a href="#cb5-13" tabindex="-1"></a></span>
+<span id="cb5-14"><a href="#cb5-14" tabindex="-1"></a><span class="fu">sprintf</span>(<span class="st">&quot;The risk difference is %s with 95%% CI: (%s - %s)&quot;</span>, <span class="fu">round</span>(diff_est, <span class="dv">2</span>), <span class="fu">round</span>(ci_l, <span class="dv">2</span>), <span class="fu">round</span>(ci_u, <span class="dv">2</span>))</span></code></pre></div>
+<pre><code>## [1] &quot;The risk difference is 0.38 with 95% CI: (0.24 - 0.52)&quot;</code></pre>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a><span class="fu">sprintf</span>(<span class="st">&quot;p-value: %s&quot;</span>, <span class="fu">formatC</span>(p_value, <span class="at">format =</span> <span class="st">&quot;e&quot;</span>, <span class="at">digits =</span> <span class="dv">2</span>))</span></code></pre></div>
+<pre><code>## [1] &quot;p-value: 1.15e-07&quot;</code></pre>
+</div>
+<div id="comparing-different-implementations" class="section level2">
+<h2>Comparing different implementations</h2>
+<p>To illustrate the usage of {beeca} and for purposes of results
+validation, we compare {beeca} with other available implementations of
+<a href="https://doi.org/10.1177/009286151104500409">Ge et
+al. (2011)</a> and <a href="https://doi.org/10.1080/24754269.2023.2205802">Ye et
+al. (2023)</a> methods in R and SAS. We demonstrate equivalence of
+results while highlighting the simple user interface of {beeca}. Our
+lightweight package has been developed with a focus on facilitating
+quick industry adoption including compliance with GxP validation
+requirements with minimal dependencies.</p>
+<p>Throughout the comparisons, we use the dataset <code>trial01</code>
+included in the {beeca} package and focus on the risk difference
+contrast.</p>
+<div id="ge-et-al-2011" class="section level3">
+<h3>Ge et al (2011)</h3>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a><span class="co"># pre-process trial01 dataset to convert treatment arm to a factor and handle missing value</span></span>
+<span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a>data01 <span class="ot">&lt;-</span> trial01 <span class="sc">|&gt;</span></span>
+<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a>  <span class="fu">transform</span>(<span class="at">trtp =</span> <span class="fu">as.factor</span>(trtp)) <span class="sc">|&gt;</span></span>
+<span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(aval))</span>
+<span id="cb9-5"><a href="#cb9-5" tabindex="-1"></a>fit <span class="ot">&lt;-</span> <span class="fu">glm</span>(aval <span class="sc">~</span> trtp <span class="sc">+</span> bl_cov, <span class="at">family =</span> <span class="st">&quot;binomial&quot;</span>, <span class="at">data =</span> data01)</span>
+<span id="cb9-6"><a href="#cb9-6" tabindex="-1"></a>beeca_ge <span class="ot">&lt;-</span> <span class="fu">get_marginal_effect</span>(<span class="at">object =</span> fit, <span class="at">trt =</span> <span class="st">&quot;trtp&quot;</span>, <span class="at">method =</span> <span class="st">&quot;Ge&quot;</span>, </span>
+<span id="cb9-7"><a href="#cb9-7" tabindex="-1"></a>                                <span class="at">contrast =</span> <span class="st">&quot;diff&quot;</span>, <span class="at">reference =</span> <span class="st">&quot;0&quot;</span>, <span class="at">type =</span> <span class="st">&quot;model-based&quot;</span>)</span>
+<span id="cb9-8"><a href="#cb9-8" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;Point estimate&quot;</span>, beeca_ge<span class="sc">$</span>marginal_est, <span class="st">&quot;</span><span class="sc">\n</span><span class="st">Standard error estimate&quot;</span>, beeca_ge<span class="sc">$</span>marginal_se)</span></code></pre></div>
+<pre><code>## Point estimate -0.06836399 
+## Standard error estimate 0.06071641</code></pre>
+<p><strong>Alternative version 1</strong>: code provided in <a href="https://doi.org/10.1177/009286151104500409">Ge et al. (2011)</a>
+paper. Note the corresponding SAS code is also available in the
+paper.</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a>ge_var_paper <span class="ot">&lt;-</span> <span class="cf">function</span>(glmfit, trt) {</span>
+<span id="cb11-2"><a href="#cb11-2" tabindex="-1"></a>  pder <span class="ot">&lt;-</span> <span class="cf">function</span>(ahat, vc, x) {</span>
+<span id="cb11-3"><a href="#cb11-3" tabindex="-1"></a>    <span class="do">#### ahat: logistic regression parameters</span></span>
+<span id="cb11-4"><a href="#cb11-4" tabindex="-1"></a>    <span class="do">#### vc: variance-covariance matrix of ahat</span></span>
+<span id="cb11-5"><a href="#cb11-5" tabindex="-1"></a>    <span class="do">#### x: full model matrix of the logistic regression</span></span>
+<span id="cb11-6"><a href="#cb11-6" tabindex="-1"></a>    <span class="do">#### return mean of phat on x and its se</span></span>
+<span id="cb11-7"><a href="#cb11-7" tabindex="-1"></a>    phat <span class="ot">&lt;-</span> <span class="fu">plogis</span>(x <span class="sc">%*%</span> ahat)</span>
+<span id="cb11-8"><a href="#cb11-8" tabindex="-1"></a>    pbar <span class="ot">&lt;-</span> <span class="fu">mean</span>(phat)</span>
+<span id="cb11-9"><a href="#cb11-9" tabindex="-1"></a>    pderiv <span class="ot">&lt;-</span> <span class="fu">t</span>(phat <span class="sc">*</span> (<span class="dv">1</span> <span class="sc">-</span> phat)) <span class="sc">%*%</span> x <span class="sc">/</span> <span class="fu">nrow</span>(x)</span>
+<span id="cb11-10"><a href="#cb11-10" tabindex="-1"></a>    sepbar <span class="ot">&lt;-</span> <span class="fu">sqrt</span>(pderiv <span class="sc">%*%</span> vc <span class="sc">%*%</span> <span class="fu">t</span>(pderiv))</span>
+<span id="cb11-11"><a href="#cb11-11" tabindex="-1"></a>    <span class="fu">return</span>(<span class="fu">list</span>(<span class="at">pbar =</span> pbar, <span class="at">sepbar =</span> sepbar, <span class="at">pderiv =</span> pderiv))</span>
+<span id="cb11-12"><a href="#cb11-12" tabindex="-1"></a>  }</span>
+<span id="cb11-13"><a href="#cb11-13" tabindex="-1"></a></span>
+<span id="cb11-14"><a href="#cb11-14" tabindex="-1"></a>  difP <span class="ot">&lt;-</span> <span class="cf">function</span>(glmfit) {</span>
+<span id="cb11-15"><a href="#cb11-15" tabindex="-1"></a>    <span class="do">#### estimate the proportion difference and its standard error</span></span>
+<span id="cb11-16"><a href="#cb11-16" tabindex="-1"></a>    df <span class="ot">&lt;-</span> glmfit<span class="sc">$</span>model</span>
+<span id="cb11-17"><a href="#cb11-17" tabindex="-1"></a></span>
+<span id="cb11-18"><a href="#cb11-18" tabindex="-1"></a>    vc <span class="ot">&lt;-</span> <span class="fu">vcov</span>(glmfit)</span>
+<span id="cb11-19"><a href="#cb11-19" tabindex="-1"></a>    df[, trt] <span class="ot">&lt;-</span> <span class="dv">1</span></span>
+<span id="cb11-20"><a href="#cb11-20" tabindex="-1"></a>    mat <span class="ot">&lt;-</span> <span class="fu">model.matrix</span>(glmfit<span class="sc">$</span>formula, <span class="at">data =</span> df)</span>
+<span id="cb11-21"><a href="#cb11-21" tabindex="-1"></a>    pderT <span class="ot">&lt;-</span> <span class="fu">pder</span>(<span class="fu">coef</span>(glmfit), vc, mat)</span>
+<span id="cb11-22"><a href="#cb11-22" tabindex="-1"></a>    df[, trt] <span class="ot">&lt;-</span> <span class="dv">0</span></span>
+<span id="cb11-23"><a href="#cb11-23" tabindex="-1"></a>    mat <span class="ot">&lt;-</span> <span class="fu">model.matrix</span>(glmfit<span class="sc">$</span>formula, <span class="at">data =</span> df)</span>
+<span id="cb11-24"><a href="#cb11-24" tabindex="-1"></a>    pderC <span class="ot">&lt;-</span> <span class="fu">pder</span>(<span class="fu">coef</span>(glmfit), vc, mat)</span>
+<span id="cb11-25"><a href="#cb11-25" tabindex="-1"></a></span>
+<span id="cb11-26"><a href="#cb11-26" tabindex="-1"></a>    difb <span class="ot">&lt;-</span> pderT<span class="sc">$</span>pbar <span class="sc">-</span> pderC<span class="sc">$</span>pbar</span>
+<span id="cb11-27"><a href="#cb11-27" tabindex="-1"></a>    sedif <span class="ot">&lt;-</span> <span class="fu">sqrt</span>((pderT<span class="sc">$</span>pderiv <span class="sc">-</span> pderC<span class="sc">$</span>pderiv) <span class="sc">%*%</span> vc <span class="sc">%*%</span> <span class="fu">t</span>(pderT<span class="sc">$</span>pderiv <span class="sc">-</span> pderC<span class="sc">$</span>pderiv))</span>
+<span id="cb11-28"><a href="#cb11-28" tabindex="-1"></a></span>
+<span id="cb11-29"><a href="#cb11-29" tabindex="-1"></a>    <span class="fu">return</span>(<span class="fu">list</span>(</span>
+<span id="cb11-30"><a href="#cb11-30" tabindex="-1"></a>      <span class="at">pT =</span> pderT<span class="sc">$</span>pbar,</span>
+<span id="cb11-31"><a href="#cb11-31" tabindex="-1"></a>      <span class="at">pC =</span> pderC<span class="sc">$</span>pbar,</span>
+<span id="cb11-32"><a href="#cb11-32" tabindex="-1"></a>      <span class="at">dif =</span> difb,</span>
+<span id="cb11-33"><a href="#cb11-33" tabindex="-1"></a>      <span class="at">sedif =</span> sedif,</span>
+<span id="cb11-34"><a href="#cb11-34" tabindex="-1"></a>      <span class="at">var =</span> sedif<span class="sc">**</span><span class="dv">2</span></span>
+<span id="cb11-35"><a href="#cb11-35" tabindex="-1"></a>    ))</span>
+<span id="cb11-36"><a href="#cb11-36" tabindex="-1"></a>  }</span>
+<span id="cb11-37"><a href="#cb11-37" tabindex="-1"></a></span>
+<span id="cb11-38"><a href="#cb11-38" tabindex="-1"></a>  <span class="fu">return</span>(<span class="fu">list</span>(<span class="at">est =</span> <span class="fu">difP</span>(glmfit)<span class="sc">$</span>dif, <span class="at">se =</span> <span class="fu">difP</span>(glmfit)<span class="sc">$</span>sedif[[<span class="dv">1</span>]]))</span>
+<span id="cb11-39"><a href="#cb11-39" tabindex="-1"></a>}</span>
+<span id="cb11-40"><a href="#cb11-40" tabindex="-1"></a>paper_ge <span class="ot">&lt;-</span> <span class="fu">ge_var_paper</span>(fit, <span class="st">&quot;trtp&quot;</span>)</span>
+<span id="cb11-41"><a href="#cb11-41" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;Point estimate&quot;</span>, paper_ge<span class="sc">$</span>est, <span class="st">&quot;</span><span class="sc">\n</span><span class="st">Standard error estimate&quot;</span>, paper_ge<span class="sc">$</span>se)</span></code></pre></div>
+<pre><code>## Point estimate -0.06836399 
+## Standard error estimate 0.06071641</code></pre>
+<p><strong>Version 2</strong>: using {margins} package</p>
+<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">requireNamespace</span>(<span class="st">&quot;margins&quot;</span>, <span class="at">quietly =</span> T)) {</span>
+<span id="cb13-2"><a href="#cb13-2" tabindex="-1"></a>  margins_ge <span class="ot">&lt;-</span> margins<span class="sc">::</span><span class="fu">margins</span>(<span class="at">model =</span> fit, <span class="at">variables =</span> <span class="st">&quot;trtp&quot;</span>, <span class="at">vcov =</span> <span class="fu">vcov</span>(fit))</span>
+<span id="cb13-3"><a href="#cb13-3" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">&quot;Point estimate&quot;</span>, <span class="fu">summary</span>(margins_ge)<span class="sc">$</span>AME, <span class="st">&quot;</span><span class="sc">\n</span><span class="st">Standard error estimate&quot;</span>, <span class="fu">summary</span>(margins_ge)<span class="sc">$</span>SE)</span>
+<span id="cb13-4"><a href="#cb13-4" tabindex="-1"></a>}</span></code></pre></div>
+<pre><code>## Point estimate -0.06836399 
+## Standard error estimate 0.06071641</code></pre>
+<p><strong>Version 3</strong>: using {marginaleffects} package</p>
+<div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">requireNamespace</span>(<span class="st">&quot;marginaleffects&quot;</span>, <span class="at">quietly =</span> T)) {</span>
+<span id="cb15-2"><a href="#cb15-2" tabindex="-1"></a>  marginaleffects_ge <span class="ot">&lt;-</span> marginaleffects<span class="sc">::</span><span class="fu">avg_comparisons</span>(fit, <span class="at">variables =</span> <span class="st">&quot;trtp&quot;</span>)</span>
+<span id="cb15-3"><a href="#cb15-3" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">&quot;Point estimate&quot;</span>, marginaleffects_ge<span class="sc">$</span>estimate, <span class="st">&quot;</span><span class="sc">\n</span><span class="st">Standard error estimate&quot;</span>, marginaleffects_ge<span class="sc">$</span>std.error)</span>
+<span id="cb15-4"><a href="#cb15-4" tabindex="-1"></a>}</span></code></pre></div>
+<pre><code>## Point estimate -0.06836399 
+## Standard error estimate 0.06071641</code></pre>
+<p><strong>Version 4</strong>: using SAS %Margins macro</p>
+<pre class="sas"><code>%Margins(data      = myWork.trial01,
+         class     = trtp,
+         classgref = first, /*Set reference to first level*/
+         response  = avaln,
+         roptions  = event=&#39;1&#39;, 
+         dist      = binomial,  
+         model     = trtp bl_cov,
+         margins   = trtp, 
+         options   = cl diff reverse, 
+         link      = logit);
+    
+** Store output data sets ; 
+data myWork.margins_trt_estimates;
+  set work._MARGINS;
+run;
+         
+data myWork.margins_trt_diffs;
+  set work._DIFFSPM;
+run;</code></pre>
+<div class="sourceCode" id="cb18"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;Point estimate&quot;</span>, margins_trial01<span class="sc">$</span>Estimate, <span class="st">&quot;</span><span class="sc">\n</span><span class="st">Standard error estimate&quot;</span>, margins_trial01<span class="sc">$</span>StdErr)</span></code></pre></div>
+<pre><code>## Point estimate -0.06836399 
+## Standard error estimate 0.06071641</code></pre>
+</div>
+<div id="ye-et-al-2023" class="section level3">
+<h3>Ye et al (2023)</h3>
+<div class="sourceCode" id="cb20"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" tabindex="-1"></a>beeca_ye <span class="ot">&lt;-</span> <span class="fu">get_marginal_effect</span>(<span class="at">object =</span> fit, <span class="at">trt =</span> <span class="st">&quot;trtp&quot;</span>, <span class="at">method =</span> <span class="st">&quot;Ye&quot;</span>, </span>
+<span id="cb20-2"><a href="#cb20-2" tabindex="-1"></a>                                <span class="at">contrast =</span> <span class="st">&quot;diff&quot;</span>, <span class="at">reference =</span> <span class="st">&quot;0&quot;</span>)</span>
+<span id="cb20-3"><a href="#cb20-3" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;Point estimate&quot;</span>, beeca_ye<span class="sc">$</span>marginal_est, <span class="st">&quot;</span><span class="sc">\n</span><span class="st">Standard error estimate&quot;</span>, beeca_ye<span class="sc">$</span>marginal_se)</span></code></pre></div>
+<pre><code>## Point estimate -0.06836399 
+## Standard error estimate 0.0608836</code></pre>
+<p><strong>Version 1</strong>: from <code>RobinCar</code> package</p>
+<div class="sourceCode" id="cb22"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">requireNamespace</span>(<span class="st">&quot;RobinCar&quot;</span>, <span class="at">versionCheck =</span> <span class="fu">list</span>(<span class="at">name =</span> <span class="st">&quot;RobinCar&quot;</span>, <span class="at">op =</span> <span class="st">&quot;==&quot;</span>, <span class="at">version =</span> <span class="st">&quot;0.3.0&quot;</span>), <span class="at">quietly =</span> T)) {</span>
+<span id="cb22-2"><a href="#cb22-2" tabindex="-1"></a>  robincar_ye <span class="ot">&lt;-</span> RobinCar<span class="sc">::</span><span class="fu">robincar_glm</span>(<span class="fu">data.frame</span>(fit<span class="sc">$</span>data), <span class="at">response_col =</span> <span class="fu">as.character</span>(fit<span class="sc">$</span>formula[<span class="dv">2</span>]),</span>
+<span id="cb22-3"><a href="#cb22-3" tabindex="-1"></a>      <span class="at">treat_col =</span> <span class="st">&quot;trtp&quot;</span>, <span class="at">formula =</span> fit<span class="sc">$</span>formula, <span class="at">g_family =</span> fit<span class="sc">$</span>family,</span>
+<span id="cb22-4"><a href="#cb22-4" tabindex="-1"></a>      <span class="at">contrast_h =</span> <span class="st">&quot;diff&quot;</span>)<span class="sc">$</span>contrast<span class="sc">$</span>result</span>
+<span id="cb22-5"><a href="#cb22-5" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">&quot;Point estimate&quot;</span>, robincar_ye<span class="sc">$</span>estimate, <span class="st">&quot;</span><span class="sc">\n</span><span class="st">Standard error estimate&quot;</span>, robincar_ye<span class="sc">$</span>se)</span>
+<span id="cb22-6"><a href="#cb22-6" tabindex="-1"></a>}</span></code></pre></div>
+</div>
+<div id="references" class="section level3">
+<h3>References</h3>
+<ul>
+<li><p>Arel-Bundock V (2023). <em>marginaleffects: Predictions,
+Comparisons, Slopes, Marginal Means, and Hypothesis Tests</em>. R
+package version 0.14.0, <a href="https://marginaleffects.com/" class="uri">https://marginaleffects.com/</a>.</p></li>
+<li><p>Bannick M, Ye T, Yi Y, Bian F (2024). <em>RobinCar: Robust
+Estimation and Inference in Covariate-Adaptive Randomization</em>. R
+package version 0.2.0, <a href="https://CRAN.R-project.org/package=RobinCar" class="uri">https://CRAN.R-project.org/package=RobinCar</a>.</p></li>
+<li><p>European Medicines Agency. 2020. “ICH E9 (R1) addendum on
+estimands and sensitivity analysis in clinical trials to the guideline
+on statistical principles for clinical trials.” <a href="https://www.ema.europa.eu/en/documents/scientific-guideline/ich-e9-r1-addendum-estimands-and-sensitivity-analysis-clinical-trials-guideline-statistical-principles-clinical-trials-step-5_en.pdf" class="uri">https://www.ema.europa.eu/en/documents/scientific-guideline/ich-e9-r1-addendum-estimands-and-sensitivity-analysis-clinical-trials-guideline-statistical-principles-clinical-trials-step-5_en.pdf</a></p></li>
+<li><p>FDA. 2023. “Adjusting for Covariates in Randomized Clinical
+Trials for Drugs and Biological Products. Final Guidance for Industry.”
+<a href="https://www.fda.gov/regulatory-information/search-fda-guidance-documents/adjusting-covariates-randomized-clinical-trials-drugs-and-biological-products" class="uri">https://www.fda.gov/regulatory-information/search-fda-guidance-documents/adjusting-covariates-randomized-clinical-trials-drugs-and-biological-products</a></p></li>
+<li><p>Ge, Miaomiao, L Kathryn Durham, R Daniel Meyer, Wangang Xie, and
+Neal Thomas. 2011. “Covariate-Adjusted Difference in Proportions from
+Clinical Trials Using Logistic Regression and Weighted Risk
+Differences.” <em>Drug Information Journal: DIJ/Drug Information
+Association</em> 45: 481–93.</p></li>
+<li><p>Magirr, Dominic, Mark Baillie, Craig Wang, and Alexander
+Przybylski. 2024. “Estimating the Variance of Covariate-Adjusted
+Estimators of Average Treatment Effects in Clinical Trials with Binary
+Endpoints.” OSF. May 16. osf.io/9mp58.</p></li>
+<li><p>SAS Institute Inc. “Predictive margins and average marginal
+effects.” <em><a href="https://support.sas.com/kb/63/038.html" class="uri">https://support.sas.com/kb/63/038.html</a></em> (Last
+Published: 13 Dec 2023)</p></li>
+<li><p>Thomas J. Leeper (2021). <em>margins: Marginal Effects for Model
+Objects</em>. R package version 0.3.26.</p></li>
+<li><p>Ye, Ting, Marlena Bannick, Yanyao Yi, and Jun Shao. 2023. Robust
+Variance Estimation for Covariate-Adjusted Unconditional Treatment
+Effect in Randomized Clinical Trials with Binary Outcomes.”
+<em>Statistical Theory and Related Fields</em> 7 (2): 159–63.</p></li>
+</ul>
+</div>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>
