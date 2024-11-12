@@ -56,11 +56,10 @@ See [Magirr et al. (2024)](https://osf.io/9mp58/) for discussion of the estimand
 
 ## Analysis example
 
-In the following example, we will use an example CDISC clinical trial dataset in ADaM format (`?trial02_cdisc`).
-We will only include the two treatment arms of interest for the analysis: "Xanomeline High Dose" and "Placebo".
-Below we show how to describe and perform an adjusted analysis targeting marginal risk difference between the two arms.  
+In the following example, we will use an example CDISC clinical trial dataset in ADaM format (`?trial02_cdisc`) with three treatment arms.
+Below we show how to describe and perform an adjusted analysis targeting marginal risk difference comparing the two active arms against placebo.  
 
-A logistic regression model will be used to estimate the average treatment effect between Xanomeline High Dose and Placebo. The model will adjust for baseline values of patient sex, race and age. Difference in marginal response proportions with p-value and corresponding 95% confidence interval will be estimated from the logistic regression model using the methodology described in Ge et al. 2011 with sandwich variance estimator (Liu et al. 2023). The sandwich estimator provides robustness to model-misspecification.
+A logistic regression model will be used to estimate the average treatment effect for Xanomeline High Dose vs Placebo and Xanomeline Low Dose vs Placebo. The model will adjust for baseline values of patient sex, race and age. Difference in marginal response proportions with p-value and corresponding 95% confidence interval will be estimated from the logistic regression model using the methodology described in Ge et al. 2011 with sandwich variance estimator (Liu et al. 2023). The sandwich estimator provides robustness to model-misspecification.
 
 ```{r, message=FALSE, warning=FALSE}
 library(beeca)
@@ -70,8 +69,6 @@ library(dplyr)
 ```{r}
 ## Prepare the dataset for input
 dat <- trial02_cdisc %>%
-  ## In this case we are only interested in comparing two arms: Placebo vs Xanomeline High Dose
-  dplyr::filter(TRTP %in% c("Placebo", "Xanomeline High Dose")) %>%
   ## Treatment variable must be coded as a factor
   dplyr::mutate(TRTP = factor(TRTP))
 
@@ -113,8 +110,12 @@ ci_u <- diff_est + (qnorm(0.975) * diff_se)
 z_score <- diff_est / diff_se
 p_value <- 2 * (1 - pnorm(abs(z_score)))
 
-sprintf("The risk difference is %s with 95%% CI: (%s - %s)", round(diff_est, 2), round(ci_l, 2), round(ci_u, 2))
-sprintf("p-value: %s", formatC(p_value, format = "e", digits = 2))
+tibble(
+  Contrast = marginal_results[marginal_results$STAT == "diff", ]$TRTVAL,
+  `Risk difference` = round(diff_est, 2),
+  `95% CI` = sprintf("(%s - %s)", round(ci_l, 2), round(ci_u, 2)),
+  `p-value` = formatC(p_value, format = "e", digits = 2)
+)
 ```
 
 ## Comparing different implementations
@@ -233,7 +234,7 @@ cat("Point estimate", beeca_ye$marginal_est, "\nStandard error estimate", beeca_
 **Version 1**: from `RobinCar` package 
 
 ```{r}
-if (requireNamespace("RobinCar", versionCheck = list(name = "RobinCar", op = "==", version = "0.3.0"), quietly = T)) {
+if (requireNamespace("RobinCar", quietly = T)) {
   robincar_ye <- RobinCar::robincar_glm(data.frame(fit$data), response_col = as.character(fit$formula[2]),
       treat_col = "trtp", formula = fit$formula, g_family = fit$family,
       contrast_h = "diff")$contrast$result
